@@ -39,9 +39,9 @@ func (h *MyHandlerStruct) ShortenHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
-	w.Header().Set("Content-Length", strconv.Itoa(len("http://localhost:8080/"+shrt)))
+	w.Header().Set("Content-Length", strconv.Itoa(len(h.cfg.WebConfig.BaseUrl+shrt)))
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("http://localhost:8080/" + shrt))
+	w.Write([]byte(h.cfg.WebConfig.BaseUrl + shrt))
 }
 
 func (h *MyHandlerStruct) UnshortenHandler(w http.ResponseWriter, r *http.Request) {

@@ -18,5 +18,6 @@ func InitFlagConfig() *Config {
 
 	pflag.StringVar(&cfg.WebConfig.HostPort, "a", "localhost:8080", "server host")
 	pflag.StringVar(&cfg.WebConfig.BaseUrl, "b", "http://localhost:8080", "base url")
+	pflag.Parse()
 	return cfg
 }

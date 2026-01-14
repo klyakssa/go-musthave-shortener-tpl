@@ -1,6 +1,10 @@
 package repository
 
-import "github.com/google/uuid"
+import (
+	"sync"
+
+	"github.com/google/uuid"
+)
 
 type Repository interface {
 	Shorten(string) (string, error)
@@ -8,14 +12,18 @@ type Repository interface {
 }
 
 var bd = make(map[string]string)
-var ud = uuid.New()
+var mu sync.RWMutex
 
 func Shorten(url string) (string, error) {
-	shurl := ud.String()
+	mu.Lock()
+	defer mu.Unlock()
+	shurl := uuid.New().String()
 	bd[shurl] = url
 	return shurl, nil
 }
 
 func Unshorten(shurl string) (string, error) {
+	mu.RLock()
+	defer mu.RUnlock()
 	return bd[shurl], nil
 }
