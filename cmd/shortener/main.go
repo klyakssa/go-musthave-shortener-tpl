@@ -16,6 +16,7 @@ func main() {
 	r.Middleware(log.WithLogging())
 	r.GET("/:uuid", h.UnshortenHandler)
 	r.POST("/", h.ShortenHandler)
+	r.POST("/api/shorten", h.NewShortenHandler)
 
 	if err := r.Run(config.WebConfig.HostPort); err != nil {
 		panic(err)

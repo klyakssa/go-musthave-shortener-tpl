@@ -23,7 +23,7 @@ func InitFlagConfig() *Config {
 	}
 	if cfg.WebConfig.BaseUrl == "" {
 		pflag.StringVar(&cfg.WebConfig.BaseUrl, "b", "http://localhost:8080", "base url")
-		pflag.Parse()
 	}
+	pflag.Parse()
 	return cfg
 }
