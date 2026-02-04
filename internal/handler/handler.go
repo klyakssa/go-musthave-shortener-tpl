@@ -7,16 +7,19 @@ import (
 	"strconv"
 
 	"github.com/klyakssa/go-musthave-shortener-tpl/internal/config"
+	"github.com/klyakssa/go-musthave-shortener-tpl/internal/logger"
 	"github.com/klyakssa/go-musthave-shortener-tpl/internal/repository"
 )
 
 type MyHandlerStruct struct {
-	cfg *config.Config
+	cfg    *config.Config
+	Logger *logger.MyLogger
 }
 
-func NewMyHandler(cfg *config.Config) *MyHandlerStruct {
+func NewMyHandler(cfg *config.Config, l *logger.MyLogger) *MyHandlerStruct {
 	return &MyHandlerStruct{
-		cfg: cfg,
+		cfg:    cfg,
+		Logger: l,
 	}
 }
 
