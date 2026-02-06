@@ -5,11 +5,14 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
+	"github.com/gin-gonic/gin"
 	"github.com/klyakssa/go-musthave-shortener-tpl/internal/config"
 	"github.com/klyakssa/go-musthave-shortener-tpl/internal/logger"
 	"github.com/klyakssa/go-musthave-shortener-tpl/internal/model"
 	"github.com/klyakssa/go-musthave-shortener-tpl/internal/repository"
+	"github.com/klyakssa/go-musthave-shortener-tpl/pkg/gzip"
 )
 
 type MyHandlerStruct struct {
@@ -21,6 +24,34 @@ func NewMyHandler(cfg *config.Config, l *logger.MyLogger) *MyHandlerStruct {
 	return &MyHandlerStruct{
 		cfg:    cfg,
 		Logger: l,
+	}
+}
+
+func (h *MyHandlerStruct) GzipMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		acceptEncoding := c.Request.Header.Get("Accept-Encoding")
+		supportsGzip := strings.Contains(acceptEncoding, "gzip")
+		if supportsGzip {
+			gz := gzip.NewCompressWriter(c.Writer)
+			h.Logger.Logger.Debug("gzip")
+			c.Writer = gz
+			defer gz.Close()
+		}
+
+		contentEncoding := c.Request.Header.Get("Content-Encoding")
+		sendsGzip := strings.Contains(contentEncoding, "gzip")
+		if sendsGzip {
+			cr, err := gzip.NewCompressReader(c.Request.Body)
+			if err != nil {
+				h.Logger.Logger.Error(err)
+				c.Writer.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			c.Request.Body = cr
+			defer cr.Close()
+		}
+
+		c.Next()
 	}
 }
 
@@ -36,6 +67,8 @@ func (h *MyHandlerStruct) ShortenHandler(w http.ResponseWriter, r *http.Request)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	h.Logger.Logger.Debug(string(body), " to ", shrt)
 
 	if err = r.Body.Close(); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -54,11 +87,13 @@ func (h *MyHandlerStruct) UnshortenHandler(w http.ResponseWriter, r *http.Reques
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	h.Logger.Logger.Debug(r.URL.Path[1:], " to ", lng)
 	w.Header().Add("Location", lng)
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
 func (h *MyHandlerStruct) NewShortenHandler(w http.ResponseWriter, r *http.Request) {
+	h.Logger.Logger.Debug(r.Header)
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -76,6 +111,7 @@ func (h *MyHandlerStruct) NewShortenHandler(w http.ResponseWriter, r *http.Reque
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	h.Logger.Logger.Debug(req.URL, " to ", shrt)
 
 	if err = r.Body.Close(); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

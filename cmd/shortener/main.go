@@ -14,6 +14,7 @@ func main() {
 
 	h := handler.NewMyHandler(config, log)
 	r.Middleware(log.WithLogging())
+	r.Middleware(h.GzipMiddleware())
 	r.GET("/:uuid", h.UnshortenHandler)
 	r.POST("/", h.ShortenHandler)
 	r.POST("/api/shorten", h.NewShortenHandler)

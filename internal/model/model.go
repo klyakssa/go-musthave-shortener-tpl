@@ -7,3 +7,8 @@ type ShortenRequest struct {
 type ShortenResponse struct {
 	Result string `json:"result"`
 }
+
+var AcceptedContentTypes = []string{
+	"application/json",
+	"text/html",
+}
