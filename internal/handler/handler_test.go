@@ -14,6 +14,8 @@ import (
 	"github.com/klyakssa/go-musthave-shortener-tpl/internal/handler"
 	"github.com/klyakssa/go-musthave-shortener-tpl/internal/logger"
 	"github.com/klyakssa/go-musthave-shortener-tpl/internal/model"
+	"github.com/klyakssa/go-musthave-shortener-tpl/internal/service/fileservice"
+	"github.com/klyakssa/go-musthave-shortener-tpl/internal/service/uuidservice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -54,7 +56,10 @@ func TestMainHandler(t *testing.T) {
 	}
 	log = logger.NewLogger()
 	cfg = config.InitFlagConfig()
-	hand = handler.NewMyHandler(cfg, log)
+	fs := fileservice.New(cfg)
+	uuid := uuidservice.New()
+
+	hand := handler.NewMyHandler(cfg, log, fs, uuid)
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.want.url))

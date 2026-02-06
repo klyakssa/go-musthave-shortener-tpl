@@ -11,19 +11,24 @@ import (
 	"github.com/klyakssa/go-musthave-shortener-tpl/internal/config"
 	"github.com/klyakssa/go-musthave-shortener-tpl/internal/logger"
 	"github.com/klyakssa/go-musthave-shortener-tpl/internal/model"
-	"github.com/klyakssa/go-musthave-shortener-tpl/internal/repository"
+	"github.com/klyakssa/go-musthave-shortener-tpl/internal/service/fileservice"
+	"github.com/klyakssa/go-musthave-shortener-tpl/internal/service/uuidservice"
 	"github.com/klyakssa/go-musthave-shortener-tpl/pkg/gzip"
 )
 
 type MyHandlerStruct struct {
 	cfg    *config.Config
 	Logger *logger.MyLogger
+	FS     *fileservice.FileService
+	UUID   *uuidservice.UUIDService
 }
 
-func NewMyHandler(cfg *config.Config, l *logger.MyLogger) *MyHandlerStruct {
+func NewMyHandler(cfg *config.Config, l *logger.MyLogger, fs *fileservice.FileService, uuid *uuidservice.UUIDService) *MyHandlerStruct {
 	return &MyHandlerStruct{
 		cfg:    cfg,
 		Logger: l,
+		FS:     fs,
+		UUID:   uuid,
 	}
 }
 
@@ -33,7 +38,6 @@ func (h *MyHandlerStruct) GzipMiddleware() gin.HandlerFunc {
 		supportsGzip := strings.Contains(acceptEncoding, "gzip")
 		if supportsGzip {
 			gz := gzip.NewCompressWriter(c.Writer)
-			h.Logger.Logger.Debug("gzip")
 			c.Writer = gz
 			defer gz.Close()
 		}
@@ -62,7 +66,7 @@ func (h *MyHandlerStruct) ShortenHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	shrt, err := repository.Shorten(string(body))
+	shrt, err := h.UUID.Shorten(string(body))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -82,7 +86,7 @@ func (h *MyHandlerStruct) ShortenHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *MyHandlerStruct) UnshortenHandler(w http.ResponseWriter, r *http.Request) {
-	lng, err := repository.Unshorten(r.URL.Path[1:])
+	lng, err := h.UUID.Unshorten(r.URL.Path[1:])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -106,7 +110,7 @@ func (h *MyHandlerStruct) NewShortenHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	shrt, err := repository.Shorten(req.URL)
+	shrt, err := h.UUID.Shorten(req.URL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
